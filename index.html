@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="uz"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vazifalar</title>
+<style>
+:root{--bg:#f1f2f4;--c:#fff;--t:#1f2328;--m:#6b7280;--l:#e3e5e8;--a:#374151;--g:#16a34a;--r:#dc2626}
+@media(prefers-color-scheme:dark){:root{--bg:#16181c;--c:#20232a;--t:#e6e8eb;--m:#9aa1ab;--l:#2f343c;--a:#9ca3af;--g:#4ade80;--r:#f87171}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:15px/1.4 system-ui,sans-serif;padding-bottom:70px}
+main{max-width:640px;margin:auto;padding:14px}
+.card{background:var(--c);border:1px solid var(--l);border-radius:12px;padding:12px;margin-bottom:12px}
+h2{font-size:16px;margin:0 0 8px}h3{font-size:14px;margin:0 0 6px;color:var(--m)}
+.row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--l)}.row:last-child{border:0}
+.row span{flex:1}.done span{text-decoration:line-through;color:var(--m)}
+input,select,button{font:inherit;color:var(--t)}
+input,select{background:var(--bg);border:1px solid var(--l);border-radius:8px;padding:8px;min-width:0}
+button{background:var(--a);color:var(--c);border:0;border-radius:8px;padding:8px 12px;cursor:pointer}
+button.x{background:none;color:var(--m);padding:2px 6px}
+.add{display:flex;gap:6px;margin-top:8px}.add input{flex:1}
+nav{position:fixed;bottom:0;left:0;right:0;background:var(--c);border-top:1px solid var(--l);display:flex}
+nav button{flex:1;background:none;color:var(--m);border-radius:0;padding:12px 2px;font-size:13px}nav .on{color:var(--t);font-weight:600;border-top:2px solid var(--a)}
+.bar{height:10px;background:var(--l);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--g)}
+.big{font-size:34px;font-weight:700}.g{color:var(--g)}.r{color:var(--r)}.m{color:var(--m)}
+.garden{display:flex;flex-wrap:wrap;gap:2px;font-size:18px;min-height:60px}
+.t{font-size:52px;text-align:center;font-variant-numeric:tabular-nums}.cen{text-align:center}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+</style></head><body><main id="app"></main>
+<nav id="nav"></nav>
+<script>
+const K='intizom_v1',P=[['Bomdod','🌅'],['Peshin','☀️'],['Asr','🌤'],['Shom','🌇'],['Xufton','🌙']];
+const TABS=[['bugun','Bugun'],['vazifa','Vazifalar'],['odat','Odatlar'],['moliya','Moliya'],['natija','Natija']];
+let S;try{S=JSON.parse(localStorage.getItem(K))}catch(e){}
+S=S||{start:td(),tasks:[],habits:[{id:1,n:'Erta turish'},{id:2,n:'Mashq'},{id:3,n:'Kitob o\'qish'}],hl:{},stones:{},pr:{},fin:[]};
+let tab='bugun',tm={sec:1500,run:0,mode:'dars',n:0,id:null};
+function td(d=new Date()){return d.toLocaleDateString('sv')}
+function save(){try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function uid(){return Date.now()+Math.floor(Math.random()*1e3)}
+function dayStats(d){
+ const h=S.habits.length,hd=S.habits.filter(x=>(S.hl[d]||{})[x.id]).length;
+ const st=S.stones[d]||[],sd=st.filter(x=>x.d).length;
+ const tk=S.tasks.filter(x=>x.date===d),tdn=tk.filter(x=>x.d).length;
+ const pd=Object.values(S.pr[d]||{}).filter(Boolean).length;
+ const tot=h+st.length+tk.length+5,dn=hd+sd+tdn+pd;
+ return{tot,dn,p:tot?Math.round(dn/tot*100):0}}
+function ok(d){return dayStats(d).p>=70}
+function days(n){const a=[];for(let i=n-1;i>=0;i--){const x=new Date();x.setDate(x.getDate()-i);a.push(td(x))}return a}
+function growth(){let c=0;const s=new Date(S.start);for(let i=0;i<365;i++){const x=new Date(s);x.setDate(s.getDate()+i);if(x>new Date())break;if(ok(td(x)))c++}return c}
+function dayNo(){return Math.min(365,Math.floor((new Date(td())-new Date(S.start))/864e5)+1)}
+function gardenHTML(){const n=growth(),E=['🌱','🌿','🌳','🌲','🌸','🍄','🦋','🐇','🐦','🌻'];let h='';
+ for(let i=0;i<n;i++)h+=E[(i*7+Math.floor(i/10))%E.length];return h||'<span class="m">Bog\' hali bo\'sh. Kuni 70% bajarsangiz, bog\'ga yangi narsa qo\'shiladi.</span>'}
+function bar(p){return`<div class="bar"><i style="width:${p}%"></i></div>`}
+function view(){
+ const d=td(),s=dayStats(d);
+ if(tab==='bugun'){
+  const st=S.stones[d]||[];
+  return`<div class="card"><h2>${d} · ${dayNo()}-kun</h2><div class="big ${s.p>=70?'g':s.p<30?'r':''}">${s.p}%</div>${bar(s.p)}<div class="m">Bugungi 1% maqsad: ${s.dn}/${s.tot} bajarildi</div></div>
+  <div class="card"><h2>3 ta katta tosh</h2>${st.map((x,i)=>`<div class="row ${x.d?'done':''}"><input type="checkbox" ${x.d?'checked':''} onchange="stone(${i})"><span>${esc(x.t)}</span><button class="x" onclick="stoneDel(${i})">✕</button></div>`).join('')}
+  ${st.length<3?`<div class="add"><input id="si" placeholder="Bugungi eng muhim ish"><button onclick="stoneAdd()">+</button></div>`:''}</div>
+  <div class="card"><h2>Namoz bloklari</h2>${P.map(p=>`<div class="row ${(S.pr[d]||{})[p[0]]?'done':''}"><input type="checkbox" ${(S.pr[d]||{})[p[0]]?'checked':''} onchange="pray('${p[0]}')"><span>${p[1]} ${p[0]}</span></div>`).join('')}</div>
+  <div class="card"><h2>Odatlar</h2>${habRows(d)}</div>
+  <div class="card"><h2>Mening bog'im</h2><div class="garden">${gardenHTML()}</div></div>`}
+ if(tab==='vazifa'){
+  const tk=S.tasks.filter(x=>x.date===d);
+  const lbl={dars:'Dars 25 daq',q:'Qisqa tanaffus 5',u:'Uzoq tanaffus 15'}[tm.mode];
+  return`<div class="card"><h2>Taymer (dars vazifalari uchun)</h2><div class="cen m">${lbl} · ${tm.n} ta dars bajarildi</div><div class="t" id="tt">${fmt(tm.sec)}</div>
+  <div class="cen"><button onclick="tmGo()">${tm.run?'To\'xtatish':'Boshlash'}</button> <button onclick="tmReset()">Qayta</button></div></div>
+  <div class="card"><h2>Bugungi vazifalar</h2>${tk.map(x=>`<div class="row ${x.d?'done':''}"><input type="checkbox" ${x.d?'checked':''} onchange="taskDone(${x.id})"><span>${esc(x.t)}${x.s?' 📚':''}</span><button class="x" onclick="taskDel(${x.id})">✕</button></div>`).join('')||'<div class="m">Vazifa yo\'q</div>'}
+  <div class="add"><input id="ti" placeholder="Yangi vazifa"><select id="ts"><option value="0">Oddiy</option><option value="1">Dars</option></select><button onclick="taskAdd()">+</button></div></div>`}
+ if(tab==='odat'){return`<div class="card"><h2>Odatlar</h2>${habRows(d,1)}<div class="add"><input id="hi" placeholder="Yangi odat"><button onclick="habAdd()">+</button></div></div>`}
+ if(tab==='moliya'){
+  const m=d.slice(0,7),f=S.fin.filter(x=>x.date.slice(0,7)===m),inc=f.filter(x=>x.k==='+').reduce((a,x)=>a+x.a,0),exp=f.filter(x=>x.k==='-').reduce((a,x)=>a+x.a,0);
+  return`<div class="card"><h2>Shu oy</h2><div class="grid"><div><div class="m">Kirim</div><div class="big g" style="font-size:22px">${inc.toLocaleString()}</div></div><div><div class="m">Chiqim</div><div class="big r" style="font-size:22px">${exp.toLocaleString()}</div></div></div><div class="m">Qoldiq: ${(inc-exp).toLocaleString()}</div></div>
+  <div class="card"><h2>Yozuvlar</h2>${f.slice().reverse().map(x=>`<div class="row"><span>${x.date.slice(5)} ${esc(x.n)}</span><b class="${x.k==='+'?'g':'r'}">${x.k}${x.a.toLocaleString()}</b><button class="x" onclick="finDel(${x.id})">✕</button></div>`).join('')||'<div class="m">Yozuv yo\'q</div>'}
+  <div class="add"><select id="fk"><option>-</option><option>+</option></select><input id="fa" type="number" placeholder="Summa" style="width:100px"><input id="fn" placeholder="Izoh"><button onclick="finAdd()">+</button></div></div>`}
+ const w=days(7),mo=days(30),avg=a=>Math.round(a.reduce((x,k)=>x+dayStats(k).p,0)/a.length);
+ return`<div class="card"><h2>Natijalar</h2><div class="grid"><div><div class="m">Hafta</div><div class="big">${avg(w)}%</div></div><div><div class="m">Oy</div><div class="big">${avg(mo)}%</div></div></div></div>
+ <div class="card"><h3>Oxirgi 7 kun</h3>${w.map(k=>{const p=dayStats(k).p;return`<div class="row"><span>${k.slice(5)}</span><div style="flex:2" class="bar"><i style="width:${p}%;background:${p>=70?'var(--g)':p<30?'var(--r)':'var(--a)'}"></i></div><b style="width:40px;text-align:right">${p}%</b></div>`}).join('')}</div>
+ <div class="card"><h2>Maqsad: 365 kun</h2><div class="m">${growth()} kun muvaffaqiyatli (70%+). Qolgan: ${365-dayNo()} kun.</div></div>
+ <div class="card"><h2>Ma'lumotni saqlash</h2><div class="m">Ma'lumot shu brauzerda saqlanadi. Vaqti-vaqti bilan nusxa oling.</div><div class="add"><button onclick="exp()">Nusxa olish</button><button onclick="document.getElementById('imp').click()">Tiklash</button><input id="imp" type="file" accept=".json" hidden onchange="imp(this)"></div></div>`}
+function habRows(d,del){return S.habits.map(h=>{const v=(S.hl[d]||{})[h.id];return`<div class="row ${v?'done':''}"><input type="checkbox" ${v?'checked':''} onchange="hab(${h.id})"><span>${esc(h.n)}</span>${del?`<button class="x" onclick="habDel(${h.id})">✕</button>`:''}</div>`}).join('')}
+function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
+function R(){document.getElementById('app').innerHTML=view();document.getElementById('nav').innerHTML=TABS.map(t=>`<button class="${t[0]===tab?'on':''}" onclick="tab='${t[0]}';R()">${t[1]}</button>`).join('')}
+function val(i){const e=document.getElementById(i);return e?e.value.trim():''}
+function stoneAdd(){const t=val('si');if(!t)return;const d=td();(S.stones[d]=S.stones[d]||[]).push({t,d:0});save();R()}
+function stone(i){const x=S.stones[td()][i];x.d=!x.d;save();R()}
+function stoneDel(i){S.stones[td()].splice(i,1);save();R()}
+function pray(n){const d=td();S.pr[d]=S.pr[d]||{};S.pr[d][n]=!S.pr[d][n];save();R()}
+function hab(id){const d=td();S.hl[d]=S.hl[d]||{};S.hl[d][id]=!S.hl[d][id];save();R()}
+function habAdd(){const n=val('hi');if(!n)return;S.habits.push({id:uid(),n});save();R()}
+function habDel(id){if(confirm('Odat o\'chirilsinmi?')){S.habits=S.habits.filter(h=>h.id!==id);save();R()}}
+function taskAdd(){const t=val('ti');if(!t)return;S.tasks.push({id:uid(),t,s:+val('ts'),d:0,date:td()});save();R()}
+function taskDone(id){const x=S.tasks.find(t=>t.id===id);x.d=!x.d;save();R()}
+function taskDel(id){S.tasks=S.tasks.filter(t=>t.id!==id);save();R()}
+function finAdd(){const a=+val('fa');if(!a)return;S.fin.push({id:uid(),date:td(),k:val('fk'),a,n:val('fn')});save();R()}
+function finDel(id){S.fin=S.fin.filter(x=>x.id!==id);save();R()}
+function tmGo(){if(tm.run){clearInterval(tm.id);tm.run=0;R();return}tm.run=1;tm.id=setInterval(()=>{tm.sec--;const e=document.getElementById('tt');if(e)e.textContent=fmt(tm.sec);
+ if(tm.sec<=0){clearInterval(tm.id);tm.run=0;try{navigator.vibrate&&navigator.vibrate(300)}catch(e){}
+  if(tm.mode==='dars'){tm.n++;tm.mode=tm.n%4?'q':'u'}else tm.mode='dars';tm.sec={dars:1500,q:300,u:900}[tm.mode];R()}},1000);R()}
+function tmReset(){clearInterval(tm.id);tm.run=0;tm.sec={dars:1500,q:300,u:900}[tm.mode];R()}
+function exp(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='vazifalar-'+td()+'.json';a.click()}
+function imp(i){const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{S=JSON.parse(r.result);save();R()}catch(e){alert('Fayl xato')}};r.readAsText(f)}
+R();
+</script></body></html>
